@@ -296,10 +296,10 @@ async function deployToCloud(wasmFile, name, regions = []) {
   const client = new WasmifyClient();
   
   // Upload module
-  const module = await client.uploadModule(wasmFile, { name });
+  const wasmModule = await client.uploadModule(wasmFile, { name });
   
   // Deploy to edge
-  const deployment = await client.deployToEdge(module.id, regions);
+  const deployment = await client.deployToEdge(wasmModule.id, regions);
   
   return deployment.id;
 }

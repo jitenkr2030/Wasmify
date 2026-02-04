@@ -74,7 +74,7 @@ const platforms: Platform[] = [
     popularity: 90
   },
   {
-    'id: 'php',
+    id: 'php',
     name: 'PHP Applications',
     type: 'backend',
     description: 'PHP backend with WebAssembly performance boost',
@@ -86,7 +86,7 @@ const platforms: Platform[] = [
     popularity: 88
   },
   {
-    'id: 'django',
+    id: 'django',
     name: 'Django',
     type: 'backend',
     description: 'Python framework with WebAssembly modules',

@@ -343,7 +343,7 @@ export default function RuntimeManager() {
                     value={(runtime.currentLoad / runtime.capacity) * 100} 
                     className="w-full"
                   />
-                </div>
+                </CardContent>
 
                 <div className="flex justify-end space-x-2">
                   <Button 

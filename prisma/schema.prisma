@@ -31,6 +31,11 @@ model User {
   deployments   Deployment[]
   packages      Package[]
   apiKeys       ApiKey[]
+  subscription  Subscription?
+  invoices      Invoice[]
+  paymentMethods PaymentMethod[]
+  usageRecords  UsageRecord[]
+  billingEvents BillingEvent[]
 }
 
 model Account {
@@ -194,4 +199,139 @@ model ApiKey {
   
   // Relations
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Billing Models
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  tier                 SubscriptionTier @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime  @default(now())
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  stripeSubscriptionId String?   @unique
+  stripeCustomerId     String?   @unique
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  
+  // Relations
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices             Invoice[]
+  usageRecords         UsageRecord[]
+}
+
+model Invoice {
+  id               String   @id @default(cuid())
+  subscriptionId   String?  @unique
+  userId           String
+  amount           Int      // in cents
+  currency         String   @default("usd")
+  status           InvoiceStatus @default(DRAFT)
+  dueDate          DateTime
+  paidAt           DateTime?
+  stripeInvoiceId  String?  @unique
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  description      String?
+  lineItems        Json?    // Invoice line items
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  subscription     Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PaymentMethod {
+  id                 String   @id @default(cuid())
+  userId             String
+  stripePaymentMethodId String  @unique
+  type               String   // card, bank_account, etc.
+  brand              String?  // visa, mastercard, etc.
+  last4              String?  // last 4 digits
+  expiryMonth        Int?
+  expiryYear         Int?
+  isDefault          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  
+  // Relations
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UsageRecord {
+  id            String   @id @default(cuid())
+  subscriptionId String?  @unique
+  userId        String
+  metric        UsageMetric
+  value         Int      // usage value
+  period        String   // YYYY-MM format
+  timestamp     DateTime @default(now())
+  metadata      Json?    // additional metadata
+  createdAt     DateTime @default(now())
+  
+  // Relations
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BillingEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  type        BillingEventType
+  amount      Int?     // in cents
+  description String
+  metadata    Json?    // event metadata
+  stripeEventId String? @unique
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Enums
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+  TRIALING
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+enum UsageMetric {
+  MODULES
+  DEPLOYMENTS
+  API_REQUESTS
+  BANDWIDTH
+  BUILD_MINUTES
+  STORAGE
+  COLLABORATORS
+}
+
+enum BillingEventType {
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_UPDATED
+  SUBSCRIPTION_CANCELED
+  INVOICE_PAYMENT_SUCCEEDED
+  INVOICE_PAYMENT_FAILED
+  PAYMENT_METHOD_ADDED
+  PAYMENT_METHOD_REMOVED
+  USAGE_LIMIT_REACHED
+  UPGRADE_REQUESTED
 }

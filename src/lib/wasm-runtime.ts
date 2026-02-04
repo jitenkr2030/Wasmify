@@ -48,12 +48,12 @@ export class WebAssemblyRuntime {
       // Validate WebAssembly binary
       this.validateWasmBinary(wasmBuffer)
 
-      // Create module
-      const module = await this.engine.module(wasmBuffer)
+      // Create module instance
+      const wasmModule = await this.engine.module(wasmBuffer)
       
       // Cache the module
       this.moduleCache.set(moduleId, {
-        module,
+        module: wasmModule,
         config,
         loadedAt: new Date(),
         size: wasmBuffer.length

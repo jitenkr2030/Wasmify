@@ -32,8 +32,11 @@ import {
   Settings,
   PlayCircle,
   PauseCircle,
-  RefreshCw
+  RefreshCw,
+  CreditCard
 } from 'lucide-react'
+import { BillingManagement } from '@/components/billing-management'
+import { BillingAnalytics } from '@/components/billing-analytics'
 
 export default function Home() {
   const { data: session, status } = useSession()
@@ -126,12 +129,13 @@ export default function Home() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="runtime">Runtime</TabsTrigger>
             <TabsTrigger value="packages">Packages</TabsTrigger>
             <TabsTrigger value="edge">Edge Cloud</TabsTrigger>
             <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -1156,6 +1160,24 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing" className="space-y-6">
+            <Tabs defaultValue="management" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="management">Billing Management</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="management">
+                <BillingManagement />
+              </TabsContent>
+              
+              <TabsContent value="analytics">
+                <BillingAnalytics />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
         </Tabs>
       </main>

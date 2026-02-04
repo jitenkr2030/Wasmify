@@ -404,7 +404,7 @@ function extractDependencies(sourceCode: string, language: string): string[] {
   if (language === 'javascript' || language === 'typescript') {
     const imports = sourceCode.match(/import\s+.*\s+from\s+['"`]([^'"`]+)['"`]/g)
     if (imports) {
-      dependencies.push(...imports.map(match => match.split(/['"`]/[1]))
+      dependencies.push(...imports.map(match => match.split(/['"`]/)[1]))
     }
   }
   

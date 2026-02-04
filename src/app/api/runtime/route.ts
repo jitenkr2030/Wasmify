@@ -45,7 +45,7 @@ async function listAvailableRuntimes() {
       capabilities: ['security', 'performance', 'scalability', 'portability']
     },
     {
-      'id: 'wasm3',
+      id: 'wasm3',
       name: 'Wasm3',
       description: 'Next generation WebAssembly runtime',
       version: '2.0.0',
@@ -54,9 +54,9 @@ async function listAvailableRuntimes() {
       capabilities: ['threads', 'gc', 'tail-call', 'bulk-memory']
     },
     {
-      'id: 'wasm4',
+      id: 'wasm4',
       name: 'Wasm4',
-      'description: 'WebAssembly System Interface v4',
+      description: 'WebAssembly System Interface v4',
       version: '1.0.0',
       type: 'experimental',
       status: 'active',
