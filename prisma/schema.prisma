@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For credentials provider
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  modules       WasmModule[]
+  deployments   Deployment[]
+  packages      Package[]
+  apiKeys       ApiKey[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Role {
+  USER
+  ADMIN
+  DEVELOPER
+}
+
+model WasmModule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  version     String
+  wasmFile    String   // Path to .wasm file
+  sourceCode  String?  // Path to source code
+  language    String   // rust, go, c++, etc.
+  size        Int      // File size in bytes
+  hash        String   // File hash for integrity
+  isPublic    Boolean  @default(false)
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  deployments Deployment[]
+  dependencies ModuleDependency[] @relation("ModuleDependencies")
+  dependents   ModuleDependency[] @relation("DependentModules")
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  version     String
+  registryUrl String?
+  isPublic    Boolean  @default(false)
+  downloads   Int      @default(0)
+  publisherId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  publisher   User     @relation(fields: [publisherId], references: [id], onDelete: Cascade)
+  versions    PackageVersion[]
+}
+
+model PackageVersion {
+  id         String   @id @default(cuid())
+  version    String
+  wasmFile   String
+  changelog  String?
+  packageId  String
+  createdAt  DateTime @default(now())
+  
+  // Relations
+  package    Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+}
+
+model Deployment {
+  id          String   @id @default(cuid())
+  name        String
+  environment String   // production, staging, development
+  region      String   // us-east-1, eu-west-1, etc.
+  status      String   // active, inactive, deploying, failed
+  config      Json?    // Deployment configuration
+  moduleId    String
+  deployerId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  module      WasmModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  deployer    User       @relation(fields: [deployerId], references: [id], onDelete: Cascade)
+  metrics     DeploymentMetric[]
+}
+
+model DeploymentMetric {
+  id           String   @id @default(cuid())
+  timestamp    DateTime @default(now())
+  requestCount Int      @default(0)
+  responseTime Float    @default(0) // in milliseconds
+  errorRate    Float    @default(0) // percentage
+  memoryUsage  Int      @default(0) // in bytes
+  cpuUsage     Float    @default(0) // percentage
+  deploymentId String
+  
+  // Relations
+  deployment   Deployment @relation(fields: [deploymentId], references: [id], onDelete: Cascade)
+}
+
+model ModuleDependency {
+  id              String @id @default(cuid())
+  dependentModule String
+  dependencyModule String
+  version         String
+  
+  // Relations
+  module          WasmModule @relation("ModuleDependencies", fields: [dependentModule], references: [id])
+  dependsOn       WasmModule @relation("DependentModules", fields: [dependencyModule], references: [id])
+}
+
+model EdgeNode {
+  id          String   @id @default(cuid())
+  name        String
+  region      String
+  location    String   // city, country
+  status      String   // active, maintenance, offline
+  capacity    Int      // max concurrent modules
+  currentLoad Int      @default(0)
+  lastSeen    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @unique
+  scopes    String   // JSON string of scopes: ["deploy", "read", "write", "admin"]
+  isActive  Boolean  @default(true)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  lastUsed  DateTime?
+  userId    String
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
